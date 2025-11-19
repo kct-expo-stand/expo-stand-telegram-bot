@@ -1,9 +1,9 @@
 from aiogram import Router, F
-from aiogram.types import Message, FSInputFile, ReplyKeyboardRemove
+from aiogram.types import Message, FSInputFile, ReplyKeyboardRemove, CallbackQuery
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from states.states import Registration
-from keyboards.builders import get_contact_keyboard, get_skip_keyboard
+from keyboards.builders import get_contact_keyboard, get_program_keyboard
 from database.db import add_lead
 from utils.sheets import send_to_sheets
 import os
@@ -29,7 +29,7 @@ async def process_contact(message: Message, state: FSMContext):
     await state.set_state(Registration.waiting_for_program)
     await message.answer(
         "Какое направление вам интересно?",
-        reply_markup=get_skip_keyboard()
+        reply_markup=get_program_keyboard()
     )
 
 @router.message(Registration.waiting_for_phone, F.text == "У меня другой номер")
@@ -46,18 +46,29 @@ async def process_manual_phone(message: Message, state: FSMContext):
     await state.set_state(Registration.waiting_for_program)
     await message.answer(
         "Какое направление вам интересно?",
-        reply_markup=get_skip_keyboard()
+        reply_markup=get_program_keyboard()
     )
 
-@router.message(Registration.waiting_for_program)
-async def process_program(message: Message, state: FSMContext):
-    program = message.text
-    if program.lower() == "пропустить":
-        program = ""
+@router.callback_query(Registration.waiting_for_program)
+async def process_program(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    
+    callback_data = callback.data
+    
+    program_map = {
+        "program_frontend": "FrontEnd",
+        "program_backend": "BackEnd",
+        "program_design": "Design",
+        "program_gamedev": "GameDev",
+        "program_pm": "Project Manager",
+        "program_skip": ""
+    }
+    
+    program = program_map.get(callback_data, "")
     
     data = await state.get_data()
     phone = data.get("phone")
-    user = message.from_user
+    user = callback.from_user
     
     await add_lead(
         user_id=user.id,
@@ -79,7 +90,7 @@ async def process_program(message: Message, state: FSMContext):
     await state.clear()
     
     photo = FSInputFile(os.path.join("images", "violet-genius.png"))
-    await message.answer_photo(
+    await callback.message.answer_photo(
         photo=photo,
         caption="Спасибо! Ваша заявка успешно отправлена.",
         reply_markup=ReplyKeyboardRemove()
