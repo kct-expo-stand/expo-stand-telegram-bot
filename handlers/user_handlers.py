@@ -13,7 +13,7 @@ router = Router()
 @router.message(Command("start"))
 async def cmd_start(message: Message, state: FSMContext):
     await state.set_state(Registration.waiting_for_phone)
-    photo = FSInputFile(os.path.join("images", "poster.jpg"))
+    photo = FSInputFile(os.path.join("images", "violet-genius.png"))
     await message.answer_photo(
         photo=photo,
         caption="Здравствуйте! Пожалуйста, оставьте свои контактные данные, чтобы мы могли связаться с вами по вопросам обучения."
@@ -78,7 +78,7 @@ async def process_program(message: Message, state: FSMContext):
     await send_to_sheets(payload)
     await state.clear()
     
-    photo = FSInputFile(os.path.join("images", "poster.jpg"))
+    photo = FSInputFile(os.path.join("images", "violet-genius.png"))
     await message.answer_photo(
         photo=photo,
         caption="Спасибо! Ваша заявка успешно отправлена.",
