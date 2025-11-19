@@ -4,14 +4,21 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from states.states import Registration
 from keyboards.builders import get_contact_keyboard, get_program_keyboard
-from database.db import add_lead
+from database.db import add_lead, check_user_exists
 from utils.sheets import send_to_sheets
+from config import ALLOW_DUPLICATE_SUBMISSIONS
 import os
 
 router = Router()
 
 @router.message(Command("start"))
 async def cmd_start(message: Message, state: FSMContext):
+    if not ALLOW_DUPLICATE_SUBMISSIONS:
+        user_exists = await check_user_exists(message.from_user.id)
+        if user_exists:
+            await message.answer("Вы уже отправили заявку ранее. Спасибо за интерес!")
+            return
+    
     await state.set_state(Registration.waiting_for_phone)
     photo = FSInputFile(os.path.join("images", "violet-genius.png"))
     await message.answer_photo(

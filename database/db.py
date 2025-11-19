@@ -16,6 +16,14 @@ async def init_db():
         """)
         await db.commit()
 
+async def check_user_exists(user_id):
+    async with aiosqlite.connect(DB_NAME) as db:
+        cursor = await db.execute("""
+            SELECT COUNT(*) FROM leads WHERE user_id = ?
+        """, (user_id,))
+        result = await cursor.fetchone()
+        return result[0] > 0
+
 async def add_lead(user_id, username, first_name, phone, program):
     async with aiosqlite.connect(DB_NAME) as db:
         await db.execute("""
