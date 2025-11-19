@@ -102,3 +102,7 @@ async def process_program(callback: CallbackQuery, state: FSMContext):
         caption="Спасибо! Ваша заявка успешно отправлена.",
         reply_markup=ReplyKeyboardRemove()
     )
+
+@router.callback_query()
+async def inactive_button(callback: CallbackQuery):
+    await callback.answer("Эта кнопка уже не активна :)", show_alert=False)
